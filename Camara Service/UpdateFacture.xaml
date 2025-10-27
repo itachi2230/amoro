@@ -1,0 +1,95 @@
+﻿<Window x:Class="Camara_Service.UpdateFacture"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="UpdateFacture" Height="630.621" Width="903.6"
+        WindowStyle="None" Background="#23395D" MouseLeftButtonDown="Window_MouseLeftButtonDown" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style x:Key="TransparentHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+    </Window.Resources>
+    <Grid Margin="20">
+        <!-- Header -->
+        <Border CornerRadius="5" Height="40" VerticalAlignment="Top">
+            <DockPanel>
+                <TextBlock Text="Modifier la Facture" FontSize="16" FontWeight="Bold" Foreground="White" DockPanel.Dock="Left" Margin="10,0" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0,10,0">
+                    <!-- Bouton pour agrandir la fenêtre -->
+                    <Button Width="30" Height="30" Background="#00CFFF" Foreground="White" BorderThickness="0" Click="BtnMaximize_Click">
+                        <TextBlock Text="⛶" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Margin="0,50,0,0" ScrollViewer.CanContentScroll="True">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Facture Details -->
+            <Border Grid.Row="0" Background="#2C2F33" Padding="10" CornerRadius="5">
+                <StackPanel>
+                    <TextBlock Text="Détails de la facture" FontSize="18" FontWeight="Bold" Foreground="#00CFFF" />
+                    <UniformGrid Columns="2" Margin="10,5,0,0">
+                        <TextBlock Text="Client:" Foreground="White" FontSize="16" />
+                        <TextBlock x:Name="txtClient" Foreground="White"  FontSize="16" FontWeight="Bold" />
+                        <TextBlock Text="Téléphone:" Foreground="White"  FontSize="16"/>
+                        <TextBlock x:Name="txtTelephone" Foreground="White" FontWeight="Bold"  FontSize="16"/>
+                        <TextBlock Text="Total:" Foreground="White"  FontSize="16"/>
+                        <TextBlock x:Name="txtTotal" Foreground="White" FontWeight="Bold"  FontSize="16"/>
+                        <TextBlock Text="Acompte:" Foreground="White"  FontSize="16"/>
+                        <TextBlock x:Name="txtAccompte" Foreground="White" FontWeight="Bold" FontSize="16" />
+                        <TextBlock Text="Reliquat:" Foreground="White"  FontSize="16"/>
+                        <TextBlock x:Name="txtReliquat" Foreground="White" FontWeight="Bold"  FontSize="16"/>
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- Products DataGrid -->
+            <DataGrid x:Name="dataGridProduits" Grid.Row="1" Margin="0,20,0,20" AutoGenerateColumns="False" HeadersVisibility="Column"
+                      RowBackground="#1E1E1E" AlternatingRowBackground="#2C2C2C" Foreground="White" Background="Transparent" FontSize="16" IsReadOnly="True" HorizontalGridLinesBrush="#FF545252" VerticalGridLinesBrush="{x:Null}"
+                      >
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="Foreground" Value="White" />
+                        <Setter Property="FontWeight" Value="Bold" />
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Nom" Binding="{Binding Nom}" Width="*" />
+                    <DataGridTextColumn Header="Prix Unitaire" Binding="{Binding PrixUnitaire}" Width="*" />
+                    <DataGridTextColumn Header="Quantité" Binding="{Binding Quantite}" Width="*" />
+                    <DataGridTextColumn Header="Total" Binding="{Binding Total}" Width="*" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Add Accompte Section -->
+            <StackPanel Orientation="Vertical" Margin="0,0,0,10" Grid.Row="2">
+                <TextBlock Text="Ajouter un acompte" FontSize="14" FontWeight="Bold" Foreground="#00CFFF" />
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBox x:Name="txtMontantAccompte" Width="200" Height="30" VerticalAlignment="Center" />
+                    <Button Content="Ajouter" Width="100" Height="30" Background="#00CFFF" Foreground="White" 
+                            Click="BtnAjouterAccompte_Click" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Close Button -->
+            <Button Content="Fermer" Width="80" Height="30" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    Background="#00CFFF" Foreground="White" Grid.Row="3" Click="BtnFermer_Click" />
+            <Button Content="Historique" Width="80" Height="30" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                Background="#FF042B34" Foreground="White" Grid.Row="3" Click="Button_Click" />
+        </Grid>
+    </Grid>
+</Window>

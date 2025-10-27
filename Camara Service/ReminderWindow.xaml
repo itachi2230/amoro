@@ -1,0 +1,27 @@
+﻿<Window x:Class="Camara_Service.ReminderWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="#AA1E1E2F"
+        Height="250"
+        Width="450"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Opacity="0"
+        Loaded="Window_Loaded">
+
+    <Border CornerRadius="20" Background="#CC2C2C3E" Padding="20">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="⚠ Sauvegarde Recommandée !" 
+                       Foreground="#FF9800" FontSize="24" FontWeight="Bold" TextAlignment="Center"/>
+            <TextBlock Text="Cela fait plus d'une semaine depuis la dernière sauvegarde. Sauvegardez maintenant pour éviter toute perte."
+                       Foreground="White" FontSize="14" TextWrapping="Wrap" TextAlignment="Center" Margin="0,10"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                <Button Content="OK COMPRIS" Width="140" Height="40" Margin="10,0"
+                        Background="Transparent" BorderBrush="White" Foreground="White" FontWeight="Bold" Click="Fermer_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

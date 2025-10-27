@@ -1,0 +1,20 @@
+﻿https://gestion-solaire-yaya.firebaseio.com
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAkHTl5R6xmL-h-Egmv5ezcOjMLXld0-Tg",
+  authDomain: "gestion-solaire-yaya.firebaseapp.com",
+  projectId: "gestion-solaire-yaya",
+  storageBucket: "gestion-solaire-yaya.firebasestorage.app",
+  messagingSenderId: "674073192539",
+  appId: "1:674073192539:web:5024dc6575d5e05cc8777e",
+  measurementId: "G-0TZ17Q6390"
+};
+
+liste user
+<TextBlock Name="incorect" Text="Incorrect !" 
+                FontSize="14" 
+                FontWeight="Bold" 
+                Foreground="Red" 
+                HorizontalAlignment="Center" 
+    Canvas.Left="341" Canvas.Top="369" Width="75" Visibility="Hidden" />

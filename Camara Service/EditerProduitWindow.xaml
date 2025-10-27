@@ -1,0 +1,89 @@
+﻿<Window x:Class="Camara_Service.EditerProduitWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="EditerProduitWindow"
+        Height="619.13" Width="683.601"
+        WindowStartupLocation="CenterScreen"
+        Background="#0D0D0D"
+        WindowStyle="None"
+        AllowsTransparency="True" MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    <Grid Background="#FF1B263B">
+        <!-- Barre de titre personnalisée -->
+        <Border Background="#00CFFF" Height="30" VerticalAlignment="Top">
+            <Grid>
+                <TextBlock Text="Modifier un produit" VerticalAlignment="Center" Margin="10,0,0,0" FontWeight="Bold" Foreground="White" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <!-- Bouton Agrandir/Réduire -->
+                    <Button x:Name="ToggleMaximizeButton" Content="🗖" Width="30" Height="30"
+                            Background="Transparent" BorderBrush="Transparent" Foreground="White"
+                            Click="ToggleMaximizeButton_Click" />
+                    <!-- Bouton Fermer -->
+                    <Button Content="✖" Width="30" Height="30"
+                            Background="Transparent" BorderBrush="Transparent" Foreground="White"
+                            Click="CloseButton_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Contenu principal -->
+        <Grid Margin="0,30,0,0">
+            <TextBlock Text="Modifier un produit" FontSize="24" FontWeight="Bold" Foreground="#00CFFF"
+                       HorizontalAlignment="Center" Margin="165,10,154.6,447.6" Width="350" TextAlignment="Center" />
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.9" Height="491"
+                        Margin="99,88,99,10" Width="486">
+                <!-- Champs de saisie -->
+                <TextBlock Text="Nom du Produit" FontSize="16" Foreground="White" Margin="0,0,171.4,0" Height="23" HorizontalAlignment="Center" Width="291"/>
+                <TextBox x:Name="NomTextBox" FontSize="16" Padding="8" BorderBrush="#00CFFF" BorderThickness="1" Background="#2C3E50" Foreground="White" Margin="12,0,27.4,0" Height="41" Width="447" HorizontalAlignment="Center"/>
+
+                <TextBlock Text="Description" FontSize="16" Foreground="White" Margin="12,0,294.4,0" Height="23" HorizontalAlignment="Center" Width="180"/>
+                <TextBox x:Name="DescriptionTextBox" FontSize="16" Padding="8" BorderBrush="#00CFFF" BorderThickness="1" Background="#2C3E50" Foreground="White" Margin="12,0,26.4,0" Height="41"/>
+
+                <TextBlock Text="Magasin" FontSize="16" Foreground="White" Margin="12,0,200.4,0" Height="23" HorizontalAlignment="Center" Width="274"/>
+                <ComboBox x:Name="TypeComboBox" Text="0" FontSize="16" BorderBrush="#00CFFF" Background="#FF939191" Foreground="Black" Margin="12,0,27.4,0" Height="27">
+
+                    <ComboBoxItem Content="1" />
+                    <ComboBoxItem Content="2" />
+                    <ComboBoxItem Content="3" />
+                    <ComboBoxItem Content="4" />
+                    <ComboBoxItem Content="5" />
+                    <ComboBoxItem Content="6" />
+                    <ComboBoxItem Content="7" />
+                    <ComboBoxItem Content="8" />
+                    <ComboBoxItem Content="9" />
+                    <ComboBoxItem Content="10" />
+                </ComboBox>
+                <TextBlock FontSize="16" Foreground="White" Margin="12,0,389,0" Height="24" HorizontalAlignment="Center" Width="85"><Run Text="Prix ("/><Run Text="FCFA"/><Run Text=")"/></TextBlock>
+                <StackPanel Margin="12,0,27,0" Orientation="Horizontal">
+                    <TextBox x:Name="PrixTextBox" FontSize="16" Padding="8" IsEnabled="False" BorderBrush="#00CFFF" BorderThickness="1" Background="#2C3E50" Foreground="White" Height="41" Width="201"/>
+                    <TextBlock FontSize="16" Foreground="White" Height="24" HorizontalAlignment="Center" Width="13" Text=" " Margin="25,0"/>
+                    <TextBox x:Name="PrixTextBox_Copy" FontSize="16" Padding="8" BorderBrush="#00CFFF" BorderThickness="1" Background="#2C3E50" Foreground="White" Height="41" Width="183"/>
+
+
+                </StackPanel>
+                <TextBlock FontSize="16" Foreground="White" Margin="12,0,200,0" Height="24" HorizontalAlignment="Center" Width="274"><Run Text="Prix "/><Run Text="d"/><Run Text="'achat"/><Run Text=" "/><Run Text="("/><Run Text="FCFA"/><Run Text=")"/></TextBlock>
+                <StackPanel Margin="12,0,27,0" Orientation="Horizontal">
+                    <TextBox x:Name="PrixTextBox1" FontSize="16" Padding="8" BorderBrush="#00CFFF" BorderThickness="1" Background="#2C3E50" Foreground="White" Height="41" Width="445" Text="0"/>
+
+
+                </StackPanel>
+
+                <TextBlock Text="Quantité" FontSize="16" Foreground="White" Margin="12,0,195.4,0" Height="23" HorizontalAlignment="Center" Width="279"/>
+                <StackPanel Margin="12,0,27,0" Orientation="Horizontal">
+                    <TextBox x:Name="QuantiteTextBox" FontSize="16" Padding="8" BorderBrush="#00CFFF" IsEnabled="False" BorderThickness="1" Background="#2C3E50" Foreground="White" Height="41" Width="202"/>
+                    <TextBlock FontSize="16" Foreground="White" Height="24" HorizontalAlignment="Center" Width="13" Text="+" Margin="25,0"/>
+                    <TextBox x:Name="QuantiteTextBox_Copy" FontSize="16" Padding="8" BorderBrush="#00CFFF" BorderThickness="1" Background="#2C3E50" Foreground="White" Height="41" Width="181" Text="0"/>
+
+                </StackPanel>
+
+                <Canvas Margin="0,0,10.4,0" Height="65">
+                    <Button x:Name="AddProductButton" Content="Modifier Produit" FontSize="18" Padding="10"
+                        Background="#00CFFF" Foreground="White" BorderBrush="Transparent" Width="200" HorizontalAlignment="Center"
+                        Click="AddProductButton_Click" Canvas.Left="132" Canvas.Top="20"/>
+                </Canvas>
+
+                <TextBlock x:Name="SuccessMessageTextBlock" Text="Produit mis à jour avec succès!" FontSize="16"
+                    Foreground="LimeGreen" HorizontalAlignment="Center" Margin="0,10,0,0" Visibility="Collapsed"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
