@@ -26,7 +26,7 @@ namespace Camara_Service
             InitializeComponent();
             try
             {
-                Utilsv2.InitSQLiteDatabase();
+                Utilsv2.InitMySqlDatabase();
             }catch(Exception e) { MessageBox.Show(e.Message); }
            
 
