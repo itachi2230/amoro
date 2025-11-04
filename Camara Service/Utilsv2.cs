@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Data.SQLite;
 
 namespace Camara_Service
 {
@@ -73,6 +74,87 @@ namespace Camara_Service
                log("Erreur lors du chargement de la configuration DB : " + ex.Message);
                 // On retourne une chaîne vide pour éviter un crash, à toi de gérer ensuite
                 return "";
+            }
+        }
+        public static void MigrerSQLiteVersMySQL()
+        {
+            string sqlitePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appdata.sqlite");
+            if (!System.IO.File.Exists(sqlitePath))
+            {
+                log("❌ Fichier SQLite introuvable : " + sqlitePath);
+                return;
+            }
+
+            Console.WriteLine("🔄 Début de la migration des données SQLite vers MySQL...");
+
+            using (var sqliteConn = new SQLiteConnection($"Data Source={sqlitePath};Version=3;"))
+            using (var mysqlConn = new MySqlConnection(connectionString))
+            {
+                sqliteConn.Open();
+                mysqlConn.Open();
+
+                using (var mysqlTransaction = mysqlConn.BeginTransaction())
+                {
+                    try
+                    {// ⚡ Désactiver les vérifications des clés étrangères
+                        using (var cmdFkOff = new MySqlCommand("SET FOREIGN_KEY_CHECKS=0;", mysqlConn, mysqlTransaction))
+                            cmdFkOff.ExecuteNonQuery();
+                        string[] tables = { "Produits", "Factures", "HistoriquePrixAchat", "ProduitFactures","StockLogs","FactLogs", };
+
+                        foreach (var table in tables)
+                        {
+                            log($"➡ Migration de la table {table}...");
+
+                            using (var selectCmd = new SQLiteCommand($"SELECT * FROM {table}", sqliteConn))
+                            using (var reader = selectCmd.ExecuteReader())
+                            {
+                                var schema = reader.GetSchemaTable();
+                                var columns = "";
+
+                                // Construction dynamique des colonnes
+                                foreach (System.Data.DataRow row in schema.Rows)
+                                {
+                                    columns += $"`{row["ColumnName"]}`,";
+                                }
+                                columns = columns.TrimEnd(',');
+
+                                while (reader.Read())
+                                {
+                                    var values = "";
+                                    for (int i = 0; i < reader.FieldCount; i++)
+                                    {
+                                        object value = reader.GetValue(i);
+                                        string formatted = value == DBNull.Value
+                                            ? "NULL"
+                                            : $"'{MySqlHelper.EscapeString(value.ToString())}'";
+                                        values += formatted + ",";
+                                    }
+                                    values = values.TrimEnd(',');
+
+                                    string insert = $"INSERT INTO {table} ({columns}) VALUES ({values});";
+
+                                    using (var insertCmd = new MySqlCommand(insert, mysqlConn, mysqlTransaction))
+                                    {
+                                        insertCmd.ExecuteNonQuery();
+                                    }
+                                }
+                            }
+
+                            log($"✅ Table {table} migrée avec succès.");
+                        }
+                        // ⚡ Réactiver les vérifications des clés étrangères
+                        using (var cmdFkOn = new MySqlCommand("SET FOREIGN_KEY_CHECKS=1;", mysqlConn, mysqlTransaction))
+                            cmdFkOn.ExecuteNonQuery();
+
+                        mysqlTransaction.Commit();
+                        log("🎉 Migration terminée avec succès !");
+                    }
+                    catch (Exception ex)
+                    {
+                        mysqlTransaction.Rollback();
+                        log("❌ Erreur lors de la migration : " + ex.Message);
+                    }
+                }
             }
         }
         //begin users

@@ -254,7 +254,9 @@ namespace Camara_Service
             Overlay.BeginAnimation(UIElement.OpacityProperty, fadeOut);
         }
 
-
-
+        private void TextBlock_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            Utilsv2.MigrerSQLiteVersMySQL();
+        }
     }
 }

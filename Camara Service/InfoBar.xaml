@@ -31,7 +31,7 @@
 
                     <!-- Infos Sync -->
                     <StackPanel Grid.Row="1" Margin="0,15,0,10" VerticalAlignment="Top" HorizontalAlignment="Center">
-                        <TextBlock Foreground="#FF9800" FontSize="16" FontWeight="Bold" TextAlignment="Center"><Run Text="Dernière s"/><Run Text="auvegarde"/><Run Text=" :"/></TextBlock>
+                        <TextBlock Foreground="#FF9800" FontSize="16" FontWeight="Bold" TextAlignment="Center" MouseUp="TextBlock_MouseUp"><Run Text="Dernière s"/><Run Text="auvegarde"/><Run Text=" :"/></TextBlock>
                         <TextBlock x:Name="LastSyncText" Text="Jamais" Foreground="White" FontSize="14" TextAlignment="Center"/>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
