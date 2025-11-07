@@ -115,6 +115,9 @@
     <Reference Include="MySql.Data, Version=9.5.0.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
       <HintPath>..\packages\MySql.Data.9.5.0\lib\net462\MySql.Data.dll</HintPath>
     </Reference>
+    <Reference Include="MySqlBackup, Version=2.6.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MySqlBackup.NET.2.6.5\lib\net462\MySqlBackup.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -210,6 +213,9 @@
     <Compile Include="ReminderWindow.xaml.cs">
       <DependentUpon>ReminderWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ServeurConnectionWindow.xaml.cs">
+      <DependentUpon>ServeurConnectionWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="StockCard.xaml.cs">
       <DependentUpon>StockCard.xaml</DependentUpon>
     </Compile>
@@ -267,6 +273,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="ReminderWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ServeurConnectionWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -331,6 +341,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="logo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="logo2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="shapedown.png">

@@ -101,7 +101,7 @@
                        FontWeight="Bold" 
                        Foreground="White" 
                        HorizontalAlignment="Center" 
-                       Margin="79,0,81,20" Width="140" Height="30" />
+                       Margin="79,0,81,20" Width="140" Height="30" MouseUp="TextBlock_MouseUp" />
 
             <!-- Champ d'utilisateur avec Border -->
             <Border CornerRadius="10" 

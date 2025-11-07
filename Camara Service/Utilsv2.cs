@@ -12,7 +12,7 @@ namespace Camara_Service
 {
     public static class Utilsv2
     {
-        private static readonly string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dbconfig.txt");
+        public static readonly string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dbconfig.txt");
         public static readonly string connectionString = LoadConnectionString();
         public static string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appdata.sqlite");
         // Optional : exécute les CREATE TABLE IF NOT EXISTS depuis C# (si tu préfères créer via code)
@@ -155,6 +155,21 @@ namespace Camara_Service
                         log("❌ Erreur lors de la migration : " + ex.Message);
                     }
                 }
+            }
+        }
+        public static bool TestConnexionServeur()
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(LoadConnectionString()))
+                {
+                    connection.Open();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
             }
         }
         //begin users
@@ -586,33 +601,37 @@ namespace Camara_Service
         public static List<Facture> RecupererFactures()
         {
             var factures = new List<Facture>();
-            using (var connection = new MySqlConnection(connectionString))
+            try
             {
-                connection.Open();
-
-                string queryFactures = "SELECT * FROM Factures ORDER BY Id DESC";
-
-                using (var cmd = new MySqlCommand(queryFactures, connection))
-                using (var reader = cmd.ExecuteReader())
+                using (var connection = new MySqlConnection(connectionString))
                 {
-                    while (reader.Read())
-                    {
-                        int id = Convert.ToInt32(reader["Id"]);
-                        var produits = RecupererProduitsParFacture(id);
+                    connection.Open();
 
-                        factures.Add(new Facture(
-                            id,
-                            Convert.ToDateTime(reader["Date"]),
-                            reader["Client"].ToString(),
-                            produits,
-                            reader["Admin"].ToString(),
-                            reader["Telephone"].ToString(),
-                            Convert.ToDouble(reader["Accompte"])
-                        ));
+                    string queryFactures = "SELECT * FROM Factures ORDER BY Id DESC";
+
+                    using (var cmd = new MySqlCommand(queryFactures, connection))
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            int id = Convert.ToInt32(reader["Id"]);
+                            var produits = RecupererProduitsParFacture(id);
+
+                            factures.Add(new Facture(
+                                id,
+                                Convert.ToDateTime(reader["Date"]),
+                                reader["Client"].ToString(),
+                                produits,
+                                reader["Admin"].ToString(),
+                                reader["Telephone"].ToString(),
+                                Convert.ToDouble(reader["Accompte"])
+                            ));
+                        }
                     }
                 }
+                log("chargement des factures");
             }
-            log("chargement des factures");
+            catch { }
             return factures;
         }
         private static ObservableCollection<ProduitFacture> RecupererProduitsParFacture(int factureId)
@@ -1099,6 +1118,40 @@ namespace Camara_Service
 
             return historiques;
         }
+        public static string ExporterBaseVersFichier()
+        {
+            try
+            {
+                string fileName = $"backup_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.sql";
+                string backupPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "backups");
+
+                // Créer dossier si inexistant
+                if (!Directory.Exists(backupPath))
+                    Directory.CreateDirectory(backupPath);
+
+                string fullPath = Path.Combine(backupPath, fileName);
+
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand())
+                    using (var backup = new MySqlBackup(cmd))
+                    {
+                        cmd.Connection = conn;
+                        backup.ExportToFile(fullPath);
+                    }
+                }
+
+                log("💾 Export base vers fichier : " + fullPath);
+                return fullPath;
+            }
+            catch (Exception ex)
+            {
+                log("❌ Erreur export base : " + ex.Message);
+                return null;
+            }
+        }
+
     }
 
     //autres classes

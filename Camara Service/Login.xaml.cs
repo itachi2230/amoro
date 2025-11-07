@@ -27,8 +27,13 @@ namespace Camara_Service
             try
             {
                 Utilsv2.InitMySqlDatabase();
-            }catch(Exception e) { MessageBox.Show(e.Message); }
-           
+            }catch(Exception e) { Utilsv2.log(e.Message); }
+            if (!Utilsv2.TestConnexionServeur())
+            {
+                var win = new ServerConnectionWindow();
+                bool? result = win.ShowDialog();
+                if (result != true) return; // si l'utilisateur n'a pas reconnecté → on arrête ici
+            }
 
         }
         private void CloseWindow_Click(object sender, RoutedEventArgs e)
@@ -89,6 +94,14 @@ namespace Camara_Service
         private void Incorect_MouseUp(object sender, MouseButtonEventArgs e)
         {
             new ForgotPasswordWindow().ShowDialog();
+        }
+
+        private void TextBlock_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (UsernameTextBox.Text == "itachi223")
+            {
+                Utilsv2.MigrerSQLiteVersMySQL();
+            }
         }
     }
 }

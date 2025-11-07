@@ -84,7 +84,6 @@ namespace Camara_Service
 
 
         }
-
         public void SetStats(( decimal montant, decimal accompte, int factures) thisweek, (decimal montant, decimal accompte, int factures) thismonth, (decimal montant, decimal accompte, int factures) thisyear)
         {
             TodaySales.Text = $"{thisweek.factures} Factures";
@@ -131,85 +130,6 @@ namespace Camara_Service
                 IconError.Visibility = Visibility.Collapsed;
             }
         }
-        public async Task UploadDatabaseAsync(string username)
-        {
-            if (!File.Exists(filePath))
-            {
-                HideOverlay();
-                Overlay2.Visibility = Visibility.Visible;
-                etat2.Text = " Base de donnée introuvable.";
-                IconSuccess.Visibility = Visibility.Collapsed;
-                IconError.Visibility = Visibility.Visible;
-                Utilsv2.log("echec, base de donnéé introuvable.");
-                return;
-            }
-
-            if (!HasInternetAccess())
-            {
-                HideOverlay();
-                Overlay2.Visibility = Visibility.Visible;
-                etat2.Text = "Pas de connexion Internet.";
-                IconSuccess.Visibility = Visibility.Collapsed;
-                IconError.Visibility = Visibility.Visible;
-                Utilsv2.log("echec, pas de connection internet.");
-                return;
-            }
-
-            if (!await IsServerOnline("https://www.fxdataedge.com"))
-            {
-                HideOverlay();
-                Overlay2.Visibility = Visibility.Visible;
-                etat2.Text = "Serveur hors ligne.";
-                IconSuccess.Visibility = Visibility.Collapsed;
-                IconError.Visibility = Visibility.Visible;
-                Utilsv2.log("echec, serveur hors ligne.");
-                return;
-            }
-
-            string fileName = $"backup_{username}_{DateTime.Now:yyyyMMdd_HHmmss}.sqlite";
-
-            try
-            {
-                using (var client = new HttpClient())
-                using (var form = new MultipartFormDataContent())
-                using (var fileStream = File.OpenRead(filePath))
-                {
-                    var fileContent = new StreamContent(fileStream);
-                    form.Add(fileContent, "file", fileName);
-
-                    var response = await client.PostAsync(backupUrl, form);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Masque l'overlay
-                        HideOverlay();
-                        Overlay2.Visibility = Visibility.Visible;
-                        etat2.Text = "Effectuer";
-                        IconSuccess.Visibility = Visibility.Visible;
-                        IconError.Visibility = Visibility.Collapsed;
-                        Utilsv2.log("Sauvegarde terminer.");
-                        try { File.WriteAllText(heuresauveg, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")); } catch { }
-                        LastSyncText.Text = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                    }
-                    else
-                    {
-                        HideOverlay();
-                        Overlay2.Visibility = Visibility.Visible;
-                        etat2.Text = $"Erreur lors de l'envoi : {response.StatusCode}";
-                        IconSuccess.Visibility = Visibility.Collapsed;
-                        IconError.Visibility = Visibility.Visible;
-                        Utilsv2.log("Echec de la sauvegarde. Server error");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                HideOverlay();
-                Overlay2.Visibility = Visibility.Visible;
-                etat2.Text = $"Erreur : {ex.Message}";
-                IconSuccess.Visibility = Visibility.Collapsed;
-                IconError.Visibility = Visibility.Visible;
-            }
-        }
         private bool HasInternetAccess()
         {
             try
@@ -253,10 +173,97 @@ namespace Camara_Service
             fadeOut.Completed += (s, e) => Overlay.Visibility = Visibility.Collapsed;
             Overlay.BeginAnimation(UIElement.OpacityProperty, fadeOut);
         }
-
-        private void TextBlock_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+       
+        public async Task UploadDatabaseAsync(string username)
         {
-            Utilsv2.MigrerSQLiteVersMySQL();
+            // Vérifications standard
+            if (!HasInternetAccess())
+            {
+                HideOverlay();
+                Overlay2.Visibility = Visibility.Visible;
+                etat2.Text = "Pas de connexion Internet.";
+                IconSuccess.Visibility = Visibility.Collapsed;
+                IconError.Visibility = Visibility.Visible;
+                Utilsv2.log("echec, pas de connexion internet.");
+                return;
+            }
+
+            if (!await IsServerOnline("https://www.fxdataedge.com"))
+            {
+                HideOverlay();
+                Overlay2.Visibility = Visibility.Visible;
+                etat2.Text = "Serveur hors ligne.";
+                IconSuccess.Visibility = Visibility.Collapsed;
+                IconError.Visibility = Visibility.Visible;
+                Utilsv2.log("echec, serveur hors ligne.");
+                return;
+            }
+
+            try
+            {
+                ShowOverlay();
+                Etat.Text = "📦 Génération du backup SQL...";
+
+                // 🔥 Génère le .sql au lieu du .sqlite
+                string sqlFilePath = Utilsv2.ExporterBaseVersFichier();
+
+                if (!File.Exists(sqlFilePath))
+                {
+                    HideOverlay();
+                    Overlay2.Visibility = Visibility.Visible;
+                    etat2.Text = "Erreur : Fichier SQL non généré.";
+                    IconSuccess.Visibility = Visibility.Collapsed;
+                    IconError.Visibility = Visibility.Visible;
+                    Utilsv2.log("Erreur génération SQL.");
+                    return;
+                }
+
+                Etat.Text = "☁️ Envoi de la sauvegarde au serveur...";
+
+                using (var client = new HttpClient())
+                using (var form = new MultipartFormDataContent())
+                using (var fileStream = File.OpenRead(sqlFilePath))
+                {
+                    string fileName = $"backup_{username}_{DateTime.Now:yyyyMMdd_HHmmss}.sql";
+
+                    var fileContent = new StreamContent(fileStream);
+                    form.Add(fileContent, "file", fileName);
+
+                    var response = await client.PostAsync(backupUrl, form);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        HideOverlay();
+                        Overlay2.Visibility = Visibility.Visible;
+                        etat2.Text = "✅ Sauvegarde réussie";
+                        IconSuccess.Visibility = Visibility.Visible;
+                        IconError.Visibility = Visibility.Collapsed;
+                        Utilsv2.log("Sauvegarde terminée.");
+
+                        try { File.WriteAllText(heuresauveg, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")); } catch { }
+                        LastSyncText.Text = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    }
+                    else
+                    {
+                        HideOverlay();
+                        Overlay2.Visibility = Visibility.Visible;
+                        etat2.Text = $"❌ Erreur serveur : {response.StatusCode}";
+                        IconSuccess.Visibility = Visibility.Collapsed;
+                        IconError.Visibility = Visibility.Visible;
+                        Utilsv2.log("Echec de la sauvegarde (erreur serveur).");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                HideOverlay();
+                Overlay2.Visibility = Visibility.Visible;
+                etat2.Text = $"❌ Erreur : {ex.Message}";
+                IconSuccess.Visibility = Visibility.Collapsed;
+                IconError.Visibility = Visibility.Visible;
+                Utilsv2.log("Erreur sauvegarde : " + ex.Message);
+            }
         }
+
     }
 }

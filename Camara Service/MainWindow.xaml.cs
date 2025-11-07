@@ -834,24 +834,10 @@ namespace Camara_Service
             // Insertion des shapes et logo directement sur PdfContentByte
             var cb = writer.DirectContent;
 
-            // Shape en haut à gauche
-            iTextSharp.text.Image shapeUp = iTextSharp.text.Image.GetInstance("shapeup.png");
             
-            shapeUp.ScaleAbsoluteHeight(doc.PageSize.Height / 4); // ajustement hauteur
-            shapeUp.ScaleAbsoluteWidth(doc.PageSize.Width);   // ajustement largeur
-            shapeUp.SetAbsolutePosition(0, doc.PageSize.Height - shapeUp.ScaledHeight); // position en haut gauche
-            cb.AddImage(shapeUp);
-            if (facture.Produits.Count < 17) //si le panier est superieur 19 on laisse la bordure basse pour gagner de lespace
-            {
-                // Shape en bas à droite
-                iTextSharp.text.Image shapeDown = iTextSharp.text.Image.GetInstance("shapedown.png");
-                shapeDown.ScaleAbsoluteHeight(doc.PageSize.Height / 4);
-                shapeDown.ScaleAbsoluteWidth(doc.PageSize.Width);
-                shapeDown.SetAbsolutePosition(doc.PageSize.Width - shapeDown.ScaledWidth, 0); // position bas droite
-                cb.AddImage(shapeDown);
-            }
+            
             // Logo
-            iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance("logo.png");
+            iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance("logo2.png");
             logo.ScaleToFit(150,100);
             logo.SetAbsolutePosition(0, doc.PageSize.Height - margeHaut - 50); // juste sous le bord haut
             
@@ -903,9 +889,9 @@ namespace Camara_Service
             string[] headers = { "Désignation", "Qté", "P.U", "Montant" };
             foreach (var h in headers)
             {
-                PdfPCell cell = new PdfPCell(new Phrase(h, fontBlanc))
+                PdfPCell cell = new PdfPCell(new Phrase(h, fontGras))
                 {
-                    BackgroundColor = bleuFonce,
+                    BackgroundColor = bleuClair,
                     HorizontalAlignment = Element.ALIGN_CENTER,
                     Padding = 5
                 };
@@ -957,7 +943,7 @@ namespace Camara_Service
             doc.Add(tableTexte);
             doc.Close();
         }
-
+        
         private static PdfPCell CelluleTexteBg(string texte, Font font, BaseColor bg, int align = Element.ALIGN_LEFT)
         {
             return new PdfPCell(new Phrase(texte, font))
