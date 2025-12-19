@@ -5,7 +5,7 @@ namespace Camara_Service
 {
     public class Produit
     {
-        public string   Nom { get; set; }
+        public string Nom { get; set; }
         public string Description { get; set; }
         public string Type { get; set; }
         public double Prix { get; set; }

@@ -28,7 +28,17 @@ namespace Camara_Service
                     Info TEXT,
                     IsSynced TINYINT(1) DEFAULT 0
                 );",
-                // tu peux ajouter les autres CREATE TABLE ici si tu veux exécuter depuis l'app
+                @"CREATE TABLE IF NOT EXISTS ProduitLots (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    ProduitId INT,
+                    QuantiteInitiale INT,
+                    DateExpiration DATETIME,
+                    DateEntree DATETIME,
+                    StockGlobalAvant INT,
+                    IsSynced TINYINT(1) DEFAULT 0,
+                    FOREIGN KEY (ProduitId) REFERENCES Produits(id) ON DELETE CASCADE
+                );",
+                // jpeux ajouter les autres CREATE TABLE ici si tu veux exécuter depuis l'app
             };
 
             using (var conn = new MySqlConnection(connectionString))
@@ -325,9 +335,6 @@ namespace Camara_Service
             }
         }
 
-        // ... on ajoutera ensuite les méthodes Produits/Factures converties
-
-
         //
         //end users 
 
@@ -505,6 +512,24 @@ namespace Camara_Service
                 log("echec de la mise a jour de la quantite du produit " + id + " : " + ex.Message);
             }
         }
+        public static bool UpdateDateLot(int lotId, DateTime nouvelleDate)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = "UPDATE ProduitLots SET DateExpiration = @date WHERE id = @id";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@date", nouvelleDate);
+                        cmd.Parameters.AddWithValue("@id", lotId);
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex) { log("Erreur UpdateLot: " + ex.Message); return false; }
+        }
         public static int GetSeuilStock()
         {
             try
@@ -525,6 +550,268 @@ namespace Camara_Service
             int seuil = GetSeuilStock();
             var produits = GetProduits();
             return produits.Where(p => p.Quantite < seuil).ToList();
+        }
+        public static bool AjouterLot(int produitId, int quantite, DateTime dateExp, int stockAvant)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    // Ajout des colonnes quantiteRestante et estFini
+                    string sql = @"INSERT INTO ProduitLots 
+                (ProduitId, QuantiteInitiale, quantiteRestante, DateExpiration, DateEntree, StockGlobalAvant, estFini) 
+                VALUES (@pId, @qte, @qteRest, @dateExp, @dateEntree, @avant, 0)";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@pId", produitId);
+                        cmd.Parameters.AddWithValue("@qte", quantite);
+                        cmd.Parameters.AddWithValue("@qteRest", quantite); // Initialement égal au total
+                        cmd.Parameters.AddWithValue("@dateExp", dateExp);
+                        cmd.Parameters.AddWithValue("@dateEntree", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@avant", stockAvant);
+
+                        string user = log("mise a jour du produit " + produitId);
+                        AjouterStockLog("Ajout d'un lot pour le produit " + produitId + " par : " + user);
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log("Erreur lors de l'ajout du lot : " + ex.Message);
+                return false;
+            }
+        }
+        public static List<LotAlerte> GetAlertesExpiration(int joursLimite = 30)
+        {
+            var alertes = new List<LotAlerte>();
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    // On filtre sur quantiteRestante > 0 pour ne voir que les lots encore en rayon
+                    string sql = @"
+                SELECT l.id, p.Nom, l.quantiteRestante, l.DateExpiration, l.QuantiteInitiale
+                FROM ProduitLots l
+                JOIN Produits p ON l.ProduitId = p.id
+                WHERE l.DateExpiration <= DATE_ADD(NOW(), INTERVAL @jours DAY)
+                AND l.quantiteRestante > 0 
+                AND l.estFini = 0
+                ORDER BY l.DateExpiration ASC";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@jours", joursLimite);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                alertes.Add(new LotAlerte
+                                {
+                                    LotId = Convert.ToInt32(reader["id"]),
+                                    NomProduit = reader["Nom"].ToString(),
+                                    // On affiche maintenant le stock réel restant de CE lot
+                                    StockGlobal = Convert.ToInt32(reader["quantiteRestante"]),
+                                    DateExp = Convert.ToDateTime(reader["DateExpiration"]),
+                                    QteInitialeLot = Convert.ToInt32(reader["QuantiteInitiale"])
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) { log("Erreur alertes : " + ex.Message); }
+            return alertes;
+        }
+        public static int GetNombreProduitsProchesExpiration(int joursCritiques = 30)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string sql = @"
+                SELECT COUNT(DISTINCT l.id) 
+                FROM ProduitLots l
+                WHERE l.DateExpiration <= DATE_ADD(NOW(), INTERVAL @jours DAY)
+                AND l.quantiteRestante > 0 
+                AND l.estFini = 0";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@jours", joursCritiques);
+                        return Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+                }
+            }
+            catch { return 0; }
+        }
+        public static void DestockerLots(long produitId, int quantiteAVendre)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    // 1. Récupérer les lots non épuisés, triés par date d'expiration
+                    string sqlSelect = @"SELECT id, quantiteRestante FROM ProduitLots 
+                                 WHERE ProduitId = @pid AND estFini = 0 
+                                 ORDER BY DateExpiration ASC";
+
+                    List<(int id, int reste)> lotsActifs = new List<(int, int)>();
+
+                    using (var cmdSelect = new MySqlCommand(sqlSelect, conn))
+                    {
+                        cmdSelect.Parameters.AddWithValue("@pid", produitId);
+                        using (var reader = cmdSelect.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                lotsActifs.Add((reader.GetInt32("id"), reader.GetInt32("quantiteRestante")));
+                            }
+                        }
+                    }
+
+                    int resteADeduire = quantiteAVendre;
+
+                    // 2. Parcourir les lots pour déduire la quantité
+                    foreach (var lot in lotsActifs)
+                    {
+                        if (resteADeduire <= 0) break;
+
+                        int aPrelever = Math.Min(lot.reste, resteADeduire);
+                        int nouveauReste = lot.reste - aPrelever;
+                        int estFini = (nouveauReste <= 0) ? 1 : 0;
+
+                        // 3. Mettre à jour le lot
+                        string sqlUpdate = @"UPDATE ProduitLots 
+                                     SET quantiteRestante = @nouveauReste, estFini = @fini 
+                                     WHERE id = @lotId";
+
+                        using (var cmdUpdate = new MySqlCommand(sqlUpdate, conn))
+                        {
+                            cmdUpdate.Parameters.AddWithValue("@nouveauReste", nouveauReste);
+                            cmdUpdate.Parameters.AddWithValue("@fini", estFini);
+                            cmdUpdate.Parameters.AddWithValue("@lotId", lot.id);
+                            cmdUpdate.ExecuteNonQuery();
+                        }
+
+                        resteADeduire -= aPrelever;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log("Erreur lors du déstockage des lots : " + ex.Message);
+            }
+        }
+        public static void RestockerLots(long produitId, int quantiteARendre)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    // 1. Récupérer tous les lots du produit, du plus proche au plus loin (FEFO)
+                    // On veut remplir en priorité ceux qui expirent bientôt
+                    string sqlSelect = @"SELECT id, QuantiteInitiale, quantiteRestante FROM ProduitLots 
+                                 WHERE ProduitId = @pid 
+                                 ORDER BY DateExpiration ASC";
+
+                    List<(int id, int initiale, int reste)> tousLesLots = new List<(int, int, int)>();
+
+                    using (var cmdSelect = new MySqlCommand(sqlSelect, conn))
+                    {
+                        cmdSelect.Parameters.AddWithValue("@pid", produitId);
+                        using (var reader = cmdSelect.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                tousLesLots.Add((
+                                    reader.GetInt32("id"),
+                                    reader.GetInt32("QuantiteInitiale"),
+                                    reader.GetInt32("quantiteRestante")
+                                ));
+                            }
+                        }
+                    }
+
+                    int resteARendre = quantiteARendre;
+
+                    // 2. Parcourir les lots pour remettre du stock
+                    foreach (var lot in tousLesLots)
+                    {
+                        if (resteARendre <= 0) break;
+
+                        // On ne peut pas rendre plus que ce qui a été sorti (QuantiteInitiale - quantiteRestante)
+                        int placeDisponible = lot.initiale - lot.reste;
+
+                        if (placeDisponible > 0)
+                        {
+                            int aRemettre = Math.Min(placeDisponible, resteARendre);
+                            int nouveauReste = lot.reste + aRemettre;
+
+                            // Si on remet du stock, le lot n'est plus "fini"
+                            int estFini = 0;
+
+                            string sqlUpdate = @"UPDATE ProduitLots 
+                                         SET quantiteRestante = @nouveauReste, estFini = @fini 
+                                         WHERE id = @lotId";
+
+                            using (var cmdUpdate = new MySqlCommand(sqlUpdate, conn))
+                            {
+                                cmdUpdate.Parameters.AddWithValue("@nouveauReste", nouveauReste);
+                                cmdUpdate.Parameters.AddWithValue("@fini", estFini);
+                                cmdUpdate.Parameters.AddWithValue("@lotId", lot.id);
+                                cmdUpdate.ExecuteNonQuery();
+                            }
+
+                            resteARendre -= aRemettre;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log("Erreur lors du restockage des lots : " + ex.Message);
+            }
+        }
+        public static bool MarquerLotCommePerdu(int lotId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    // On force le reste à 0 et on clôture le lot
+                    string sql = "UPDATE ProduitLots SET quantiteRestante = 0, estFini = 1 WHERE id = @id";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", lotId);
+                        log("lot retire avec succes");
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex) { log("Erreur retrait lot : " + ex.Message); return false; }
+        }
+        // Petite classe de support pour l'affichage
+        public class LotAlerte
+        {
+            public int LotId { get; set; }
+            public string NomProduit { get; set; }
+            public int StockGlobal { get; set; }
+            public DateTime DateExp { get; set; }
+            public int QteInitialeLot { get; set; }
+            public int quantiteLeft { get; set; }
+            public bool isFinished { get; set; }
+            // On ajoute cette propriété pour faciliter le filtrage
+            public bool EstCritique => (DateExp - DateTime.Now).TotalDays < 7;
         }
         //
         //end produits

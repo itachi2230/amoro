@@ -52,10 +52,11 @@ namespace Camara_Service
                 }
                 double prix;
                 long quantite;
-                if (string.IsNullOrEmpty(nom) ||
-                    !double.TryParse(PrixTextBox.Text, out prix) || !long.TryParse(QuantiteTextBox.Text, out quantite))
+                // Récupérer la date d'expiration
+                DateTime? dateExp = ExpirationDatePicker.SelectedDate;
+                if (string.IsNullOrEmpty(nom) || !double.TryParse(PrixTextBox.Text, out prix) || !long.TryParse(QuantiteTextBox.Text, out quantite))
                 {
-                    MessageBox.Show("Veuillez remplir tous les champs correctement.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Veuillez remplir tous les champs obligatoires.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -67,6 +68,15 @@ namespace Camara_Service
 
                 if (Utilsv2.AddProduit(produit, "Stock"))
                 {
+                    // 1. Historique du prix d'achat
+                    Utilsv2.AjouterPrixAchat(produit.id, produit.Prix, produit.Quantite, "Fournisseur par défaut");
+
+                    // 2. NOUVEAU : Enregistrement du Lot si une date d'expiration existe
+                    if (dateExp.HasValue)
+                    {
+                        // Ici, le stock avant est 0 car c'est un nouveau produit
+                        Utilsv2.AjouterLot((int)produit.id, (int)produit.Quantite, dateExp.Value, 0);
+                    }
                     // Afficher le message de confirmation
                     SuccessMessageTextBlock.Visibility = Visibility.Visible;
                     // Réinitialiser les champs
@@ -75,9 +85,8 @@ namespace Camara_Service
                     TypeComboBox.SelectedIndex = -1;
                     PrixTextBox.Text = string.Empty;
                     QuantiteTextBox.Text = string.Empty;
-                    // Ici tu peux déjà utiliser produit.id
-                    Utilsv2.AjouterPrixAchat(produit.id, produit.Prix, produit.Quantite, "Fournisseur par défaut");
-                }
+                    ExpirationDatePicker.SelectedDate = null;
+                    }
                 else
                 {
                     MessageBox.Show("Erreur lors de l'ajout du produit.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);

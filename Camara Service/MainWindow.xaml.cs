@@ -376,28 +376,36 @@ namespace Camara_Service
                     {
                         if (pdf.Id != 0)
                         {
+                            // 1.  méthode pour le stock global (total produit)
                             Utilsv2.UpdateProduitQuant(pdf.Id, pdf.Quantite * -1);
+
+                            // 2. On ajoute la gestion chirurgicale des lots
+                            Utilsv2.DestockerLots(pdf.Id, pdf.Quantite);
                         }
                     }
                 }
-                else if (modifFacture != null)  // Enregistrement de la facture pour mise a jour
+                else if (modifFacture != null)
                 {
                     facture.Id = modifFacture.Id;
                     Utilsv2.UpdateFacture(facture);
-                    //je remet dans le stock les produit de la facrture precedente
+
+                    // 1. On remet dans le stock les produits de l'ancienne version de la facture
                     foreach (ProduitFacture pdf in modifFacture.Produits)
                     {
                         if (pdf.Id != 0)
                         {
-                            Utilsv2.UpdateProduitQuant(pdf.Id, pdf.Quantite);
+                            Utilsv2.UpdateProduitQuant(pdf.Id, pdf.Quantite); // Stock global
+                            Utilsv2.RestockerLots(pdf.Id, pdf.Quantite);     // Stock par lots (Ordre Expiration)
                         }
                     }
-                    //ensuite jenleve les nouveau produit
+
+                    // 2. On enlève les produits de la nouvelle version (modifiée)
                     foreach (ProduitFacture pdf in facture.Produits)
                     {
                         if (pdf.Id != 0)
                         {
-                            Utilsv2.UpdateProduitQuant(pdf.Id, pdf.Quantite * -1);
+                            Utilsv2.UpdateProduitQuant(pdf.Id, pdf.Quantite * -1); // Stock global
+                            Utilsv2.DestockerLots(pdf.Id, pdf.Quantite);          // Stock par lots (Ordre Expiration)
                         }
                     }
                 }

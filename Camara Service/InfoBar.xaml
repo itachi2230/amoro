@@ -100,6 +100,22 @@
 
                     <!-- Stats Rapides -->
                     <StackPanel Grid.Row="2" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Center">
+
+                        <!-- peremption-->
+                        <Border x:Name="AlerteBorder" Background="#1E1E2F" CornerRadius="12" Padding="10" MinWidth="170" MinHeight="106" Margin="0,5,0,5" Cursor="Hand" MouseLeftButtonDown="AlerteBorder_MouseLeftButtonDown">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="AlertDecagram" Foreground="Orange" Width="18" Height="18" Margin="0,0,5,0"/>
+                                    <TextBlock Text="Péremption" Foreground="Orange" FontWeight="Bold" FontSize="14"/>
+                                </StackPanel>
+
+                                <TextBlock x:Name="NbProduitsExpires" Text="0 Produits" Foreground="White" FontSize="16" FontWeight="Bold" Margin="0,5,0,0"/>
+                                <TextBlock x:Name="DelaiAlerteText" Text="dans les 30 jours" Foreground="#AAAAAA" FontSize="12"/>
+
+                                <TextBlock Text="Cliquez pour voir" Foreground="#00CCFF" FontSize="11" Margin="0,8,0,0" FontStyle="Italic"/>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Aujourd'hui -->
                         <Border Background="#1E1E2F" CornerRadius="12" Padding="10"  MinWidth="170"  MinHeight="101" Margin="0,5,0,5">
                             <StackPanel>
@@ -122,16 +138,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Cette semaine -->
-                        <Border Background="#1E1E2F" CornerRadius="12" Padding="10" MinWidth="170" MinHeight="106" Margin="0,5,0,5">
-                            <StackPanel>
-                                <TextBlock Foreground="#FF9800" FontWeight="Bold" FontSize="14"><Run Text="Cette Ann"/><Run Text="ée"/></TextBlock>
-                                <TextBlock x:Name="WeekSales" Text="70 Factures" Foreground="White" FontSize="16" FontWeight="Bold"/>
-                                <TextBlock x:Name="WeekAmount" Text="5,800 FCFA" Foreground="White" FontSize="14"/>
-                                <TextBlock x:Name="WeekAmount_Copy" Text="5,800 FCFA" Foreground="White" FontSize="14"/>
-                                <TextBlock x:Name="WeekAmount_Copy1" Text="5,800 FCFA" Foreground="White" FontSize="14"/>
-                            </StackPanel>
-                        </Border>
+                        
 
                     </StackPanel>
                 </Grid>

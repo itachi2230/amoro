@@ -60,6 +60,8 @@
                 <TextBlock Text="Quantité" FontSize="16" Foreground="White" Margin="12,0,195.4,0" Height="23" HorizontalAlignment="Center" Width="279"/>
                 <TextBox x:Name="QuantiteTextBox" FontSize="16" Padding="8" BorderBrush="#00CFFF" BorderThickness="1" Background="#2C3E50" Foreground="White" Margin="12,0,26.4,0" Height="41"/>
 
+                <TextBlock Text="Date d'expiration" FontSize="16" Foreground="White" Margin="12,0,195.4,0" Height="23" HorizontalAlignment="Center" Width="279"/>
+                <DatePicker x:Name="ExpirationDatePicker" FontSize="16" Margin="12,0,26.4,5" Height="35" Width="447" Background="#2C3E50" BorderBrush="#00CFFF"/>
                 <Canvas Margin="0,3,0,0" Height="60">
                     <Button x:Name="AddProductButton" Content="Ajouter Produit" FontSize="16" Padding="8"
                             Background="#00CFFF" Foreground="White" BorderBrush="Transparent" Width="200" HorizontalAlignment="Center"

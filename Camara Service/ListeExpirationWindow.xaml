@@ -1,0 +1,129 @@
+﻿<Window x:Class="Camara_Service.ListeExpirationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Alertes de Péremption" Height="500" Width="650" 
+        WindowStartupLocation="CenterScreen" WindowStyle="None" 
+        AllowsTransparency="True" Background="Transparent">
+
+    <Border Background="#1A1A2E" CornerRadius="15" BorderBrush="#FF9800" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="#252545" CornerRadius="15,15,0,0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0">
+                        <materialDesign:PackIcon Kind="AlertDecagram" Foreground="Orange" Width="20" Height="20"/>
+                        <TextBlock Text="GESTION DE LA PEREMPTION" Foreground="White" FontWeight="Bold" Margin="10,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0">
+                        <Button Content="—" Click="Minimize_Click" Foreground="White" Background="Transparent" BorderThickness="0" Width="30"/>
+                        <Button Content="✕" Click="Close_Click" Foreground="White" Background="Transparent" BorderThickness="0" Cursor="Hand" Width="30"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="15,15,15,5">
+                <TextBox x:Name="RechercheTxt" Width="200" Margin="0,0,15,0" 
+                         materialDesign:HintAssist.Hint="Rechercher un produit..." 
+                         Foreground="Black" 
+                         CaretBrush="Black"
+                         TextChanged="RechercheTxt_TextChanged"
+                         />
+
+                <ComboBox x:Name="FiltreDelai" Width="180" Foreground="Black" 
+                          SelectionChanged="FiltreDelai_SelectionChanged">
+                    <ComboBoxItem Content="Prochains 30 jours" IsSelected="True"/>
+                    <ComboBoxItem Content="Prochains 90 jours"/>
+                    <ComboBoxItem Content="Tous les lots"/>
+                </ComboBox>
+            </StackPanel>
+
+            <Grid Grid.Row="2" Margin="15,5,15,15">
+                <DataGrid x:Name="ExpirationGrid" AutoGenerateColumns="False" CanUserAddRows="False" 
+                          Background="Transparent" Foreground="White" BorderThickness="0"
+                          RowBackground="#252545" AlternatingRowBackground="#2A2A4D"
+                          GridLinesVisibility="None" HeadersVisibility="Column">
+
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="Orange"/>
+                            <Setter Property="Padding" Value="10,8"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="#3F3F5F"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Produit" Binding="{Binding NomProduit}" Width="*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Date Exp." Binding="{Binding DateExp, StringFormat=dd/MM/yyyy}" Width="110" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Quantité" Binding="{Binding StockGlobal}" Width="70" IsReadOnly="True"/>
+                        <DataGridTemplateColumn Header="Action" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Épuiser" 
+                            Padding="5,2"
+                            Background="#FF9800" 
+                            Foreground="White"
+                            Click="BtnFermerLot_Click"> 
+                                        <Button.Resources>
+                                            <Style TargetType="Border">
+                                                <Setter Property="CornerRadius" Value="3"/>
+                                            </Style>
+                                        </Button.Resources>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>      
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Statut" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Ellipse Width="10" Height="10" Fill="Red" HorizontalAlignment="Center">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding EstCritique}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard RepeatBehavior="Forever">
+                                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.2" Duration="0:0:0.6" AutoReverse="True"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </DataTrigger.EnterActions>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                        <TextBlock Text="OK" Foreground="LimeGreen" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding EstCritique}" Value="False">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

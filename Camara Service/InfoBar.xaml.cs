@@ -5,6 +5,7 @@ using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -81,7 +82,7 @@ namespace Camara_Service
                 }
             }
             catch { }
-
+            ActualiserAlertes();
 
         }
         public void SetStats(( decimal montant, decimal accompte, int factures) thisweek, (decimal montant, decimal accompte, int factures) thismonth, (decimal montant, decimal accompte, int factures) thisyear)
@@ -96,11 +97,46 @@ namespace Camara_Service
             YesterdayAmount_Copy.Text = $"accompte: {thismonth.accompte:N0} FCFA";
             YesterdayAmount_Copy1.Text = $"dette: {thismonth.montant-thismonth.accompte:N0} FCFA";
 
-            WeekSales.Text = $"{thisyear.factures} Factures";
-            WeekAmount.Text = $"total: {thisyear.montant:N0} FCFA";
-            WeekAmount_Copy.Text = $"accompte: {thisyear.accompte:N0} FCFA";
-            WeekAmount_Copy1.Text = $"dette: {thisyear.montant-thisyear.accompte:N0} FCFA";
+        }
 
+        private void ActualiserAlertes()
+        {
+            try
+            {
+                // On récupère le nombre de produits expirant dans 30 jours
+                int nb = Utilsv2.GetNombreProduitsProchesExpiration(30);
+
+                if (nb > 0)
+                {
+                    NbProduitsExpires.Text = $"{nb} Produit(s)";
+                    NbProduitsExpires.Foreground = new SolidColorBrush(Colors.White);
+                    AlerteBorder.BorderBrush = new SolidColorBrush(Colors.Red);
+                    AlerteBorder.BorderThickness = new Thickness(1);
+
+                    // Animation optionnelle pour attirer l'oeil
+                    DoubleAnimation blink = new DoubleAnimation(1, 0.4, TimeSpan.FromSeconds(0.8))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever
+                    };
+                    AlerteBorder.BeginAnimation(UIElement.OpacityProperty, blink);
+                }
+                else
+                {
+                    NbProduitsExpires.Text = "Aucune alerte";
+                    AlerteBorder.BorderThickness = new Thickness(0);
+                    AlerteBorder.BeginAnimation(UIElement.OpacityProperty, null); // Stop animation
+                }
+            }
+            catch { }
+        }
+
+        // Action lors du clic sur le bloc
+        private void AlerteBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+           ListeExpirationWindow win = new ListeExpirationWindow();
+           win.ShowDialog();
+            
         }
         private async void CloudSync_Click(object sender, RoutedEventArgs e)
         {

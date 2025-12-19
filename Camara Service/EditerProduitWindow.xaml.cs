@@ -74,7 +74,7 @@ namespace Camara_Service
                 double prix;
                 double prixAchat;
                 long quantite;
-
+                DateTime? dateExp = ExpirationDatePicker.SelectedDate;
                 if (string.IsNullOrEmpty(nom) ||
                     !double.TryParse(PrixTextBox_Copy.Text, out prix) || !long.TryParse(QuantiteTextBox_Copy.Text, out quantite) || !double.TryParse(PrixTextBox1.Text, out prixAchat))
                 {
@@ -89,6 +89,13 @@ namespace Camara_Service
                 if (Utilsv2.UpdateProduit(this.id, produit))
                 {
                     Utilsv2.AjouterPrixAchat(produit.id, prixAchat,quantite);
+                    // 2. NOUVEAU : Enregistrement du Lot
+                    // On n'ajoute un lot que si une quantité positive a été ajoutée ET qu'une date est saisie
+                    if (dateExp.HasValue && quantite > 0)
+                    {
+                        // On passe 'ancienq' comme étant le stock existant avant l'ajout
+                        Utilsv2.AjouterLot((int)this.id, (int)quantite, dateExp.Value, (int)ancienq);
+                    }
                     // Afficher le message de confirmation
                     SuccessMessageTextBlock.Visibility = Visibility.Visible;
 
