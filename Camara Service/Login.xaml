@@ -51,7 +51,7 @@
                        Visibility="Hidden"
                        Foreground="Red"
                        Canvas.Left="338" Canvas.Top="426" 
-                       Width="75" MouseUp="Incorect_MouseUp" />
+                       Width="75"  />
 
             <!-- Logo animé -->
             <Image x:Name="logoImage"
@@ -92,7 +92,7 @@
         </Button>
 
         <!-- Contenu Principal -->
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="300" Margin="239,195,355.4,131.4">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="300" Margin="239,187,355,115" Height="244">
             <!-- Nom de la boutique -->
 
             <!-- Titre -->
@@ -143,6 +143,7 @@
                         Height="40" 
                         Background="Transparent" Margin="22,0,24,0" />
             </Border>
+            <TextBlock MouseUp="Incorect_MouseUp" TextWrapping="Wrap" FontSize="10" TextDecorations="underline" Margin="109,0,81,0"><Run Text="Mot de passe oublié"/><Run Text="?"/></TextBlock>
         </StackPanel>
     </Grid>
 </Window>

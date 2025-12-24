@@ -277,7 +277,6 @@ namespace Camara_Service
                 return false;
             }
         }
-
         // ChargerUsers
         public static List<User> ChargerUsers()
         {
@@ -308,7 +307,6 @@ namespace Camara_Service
             log("Chargement des utilisateurs effectué");
             return users;
         }
-
         // AdminResetPasswordLocal
         public static bool AdminResetPasswordLocal(string targetUsername, string newPassword)
         {
@@ -334,7 +332,55 @@ namespace Camara_Service
                 return false;
             }
         }
-
+        // Supprimer un utilisateur
+        public static bool SupprimerUser(long userId)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "DELETE FROM Users WHERE id = @id";
+                        cmd.Parameters.AddWithValue("@id", userId);
+                        int rows = cmd.ExecuteNonQuery();
+                        log("Suppression de l'utilisateur ID: " + userId);
+                        return rows > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log("Erreur SupprimerUser: " + ex.Message);
+                return false;
+            }
+        }
+        // Changer le rôle (Info) d'un utilisateur
+        public static bool ChangerRoleUser(long userId, string newRole)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "UPDATE Users SET Info = @role WHERE id = @id";
+                        cmd.Parameters.AddWithValue("@role", newRole);
+                        cmd.Parameters.AddWithValue("@id", userId);
+                        int rows = cmd.ExecuteNonQuery();
+                        log($"Changement rôle utilisateur {userId} en {newRole}");
+                        return rows > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log("Erreur ChangerRoleUser: " + ex.Message);
+                return false;
+            }
+        }
         //
         //end users 
 

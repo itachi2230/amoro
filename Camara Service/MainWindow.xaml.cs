@@ -22,9 +22,10 @@ namespace Camara_Service
     {
         private List<ProduitFacture> produitsFacture = new List<ProduitFacture>();
         private List<Produit> produitsCharger;
+        private List<Produit> _tousLesProduits = new List<Produit>();
         private Facture modifFacture;
         ObservableCollection<ProduitFacture> panierCollection = new ObservableCollection<ProduitFacture>();
-        public static User currentUser;
+        public static User currentUser=null;
         InfoBar infobar;
         public MainWindow()
         {
@@ -42,21 +43,15 @@ namespace Camara_Service
         public MainWindow(User user)
         {
             InitializeComponent();
-            
-            dateFacture.Text = DateTime.Now.ToShortDateString();
             currentUser = user;
             infobar = new InfoBar();
             Grid.SetColumn(infobar, 1);
             dashboard.Children.Add(infobar);
             loadStatistic();
-            var produitsSousSeuil = Utilsv2.GetProduitsSousSeuil();
-            if (produitsSousSeuil.Any())
-            {
-                var fenetre = new StockWarningWindow(produitsSousSeuil);
-                fenetre.ShowDialog();
-            }
+            
+            dateFacture.Text = DateTime.Now.ToShortDateString();
+            
         }
-
         public void loadStatistic()
         {
             //stats produit
@@ -119,8 +114,8 @@ namespace Camara_Service
         // Méthode pour charger les produits
         private void LoadStockData()
         {
-            var produits = Utilsv2.GetProduits(); // Méthode dans la classe Utils pour récupérer les produits
-            StockDataGrid.ItemsSource = produits;
+            _tousLesProduits = Utilsv2.GetProduits();
+            AppliquerFiltresStock(); // On appelle la centralisation du filtrage
         }
 
         // Ajouter un produit
@@ -160,27 +155,51 @@ namespace Camara_Service
         {
             LoadStockData(); // Recharge les données
         }
-
-        // Filtrer par Type
-        private void FiltreTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void GridProduits_Loaded(object sender, RoutedEventArgs e)
         {
-            try
+            _tousLesProduits = Utilsv2.GetProduits();
+            AppliquerFiltresStock();
+            RechercheStockTxt.TextChanged += RechercheStockTxt_TextChanged;
+            FiltreTypeComboBox.SelectionChanged += FiltreTypeComboBox_SelectionChanged;
+        }
+        private void AppliquerFiltresStock()
+        {
+            if (_tousLesProduits == null) return;
+
+            var resultat = _tousLesProduits.AsEnumerable();
+
+            // Filtre par Magasin (ComboBox)
+            if (FiltreTypeComboBox != null && FiltreTypeComboBox.SelectedItem is ComboBoxItem selectedItem)
             {
-                var selectedType = ((ComboBoxItem)FiltreTypeComboBox.SelectedItem).Content.ToString();
-                if (selectedType == "Tous les magasins")
+                string selectedType = selectedItem.Content.ToString();
+                if (selectedType != "Tous les magasins")
                 {
-                    StockDataGrid.ItemsSource = Utilsv2.GetProduits();
-                }
-                else
-                {
-                    if(selectedType== "Boutique Amoro")
-                    {
-                        selectedType = "0";
-                    }
-                    StockDataGrid.ItemsSource = Utilsv2.GetProduits().Where(p => p.magasin == Convert.ToInt32(selectedType));
+                    string magasinCible = (selectedType == "Boutique Amoro") ? "0" : selectedType;
+                    int magId = Convert.ToInt32(magasinCible);
+                    resultat = resultat.Where(p => p.magasin == magId);
                 }
             }
-            catch { }
+
+             //Filtre par Recherche (TextBox)
+            if (RechercheStockTxt != null && !string.IsNullOrWhiteSpace(RechercheStockTxt.Text))
+            {
+                string recherche = RechercheStockTxt.Text.ToLower().Trim();
+                resultat = resultat.Where(p =>
+                    p.Nom.ToLower().Contains(recherche) ||
+                    (p.Description != null && p.Description.ToLower().Contains(recherche))
+                );
+            }
+
+            StockDataGrid.ItemsSource = resultat.ToList();
+        }
+        // 4. Les événements qui déclenchent le filtrage
+        private void RechercheStockTxt_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            AppliquerFiltresStock();
+        }
+        private void FiltreTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            AppliquerFiltresStock();
         }
         // Méthode pour ajouter du texte dans une cellule de la grille
         private void AddTextToGrid(Grid grid, string text, int row, int column)
@@ -196,7 +215,6 @@ namespace Camara_Service
             Grid.SetColumn(textBlock, column);
             grid.Children.Add(textBlock);
         }
-
         private void OngletDashboard_Click(object sender, RoutedEventArgs e)
         {
             // GridProduits.Visibility = Visibility.Collapsed;
@@ -208,7 +226,6 @@ namespace Camara_Service
             conteneurPrincipale.Children.Add(dashboard);
             loadStatistic();
         }
-
         // Gérer les changements dans la sélection
         private void ProduitComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -236,7 +253,6 @@ namespace Camara_Service
         {
               CalculerTotal();
         }
-
         private void ProduitComboBox_KeyUp(object sender, KeyEventArgs e)
         {
             try
@@ -261,7 +277,6 @@ namespace Camara_Service
             }
             catch { }
         }
-
         private void AjouterProduitfacture_Click(object sender, RoutedEventArgs e)
         {
             // Récupérer les données du formulaire
@@ -307,12 +322,10 @@ namespace Camara_Service
             var total = panierCollection.Sum(p => p.PrixUnitaire * p.Quantite);
             TotalTextBlock.Text = $"{total:N2} FCFA";
         }
-
         private void PanierDataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
            CalculerTotal();
         }
-
         private async void Button_Click_1(object sender, RoutedEventArgs e)
         {
             try
@@ -426,7 +439,6 @@ namespace Camara_Service
                 MessageBox.Show($"Une erreur s'est produite lors de l'enregistrement de la facture : {ex.Message}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
         // Méthode pour réinitialiser les champs après l'enregistrement
         private void ReinitialiserChamps()
         {
@@ -453,6 +465,12 @@ namespace Camara_Service
         {
             conteneurPrincipale.Children.Clear();
             conteneurPrincipale.Children.Add(dashboard);
+            var produitsSousSeuil = Utilsv2.GetProduitsSousSeuil();
+            if (produitsSousSeuil.Any())
+            {
+                var fenetre = new StockWarningWindow(produitsSousSeuil);
+                fenetre.ShowDialog();
+            }
         }
         private void ChargerHistoriqueFactures()
         {
@@ -478,7 +496,6 @@ namespace Camara_Service
 
             FacturesDataGrid.ItemsSource = facturesFiltrees;
         }
-
         private void FiltrerFacturesBtn_Click(object sender, RoutedEventArgs e)
         {
             DateTime? dateDebut = DateDebut.SelectedDate;
@@ -510,7 +527,6 @@ namespace Camara_Service
 
             FacturesDataGrid.ItemsSource = Utilsv2.RecupererFactures();
         }
-
         private void FacturesDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (FacturesDataGrid.SelectedItem != null)
@@ -519,7 +535,6 @@ namespace Camara_Service
                 ChargerHistoriqueFactures();
             }
         }
-
         private void FacturesDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Delete && FacturesDataGrid.SelectedItem is Facture selectedFacture)
@@ -573,7 +588,6 @@ namespace Camara_Service
             // Afficher le panneau administrateur si c'est un admin
             adminPanel.Visibility = currentUser.Info == "Administrateur" ? Visibility.Visible : Visibility.Collapsed;
         }
-
         /// Modifier le mot de passe de l'utilisateur connecté.
         /// </summary>
         private void BtnChangePassword_Click(object sender, RoutedEventArgs e)
@@ -604,7 +618,6 @@ namespace Camara_Service
                 MessageBox.Show("Erreur lors de la modification du mot de passe.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
         /// <summary>
         /// Valide le mot de passe administrateur pour afficher le formulaire de création d'utilisateur.
         /// </summary>
@@ -655,7 +668,6 @@ namespace Camara_Service
         {
             this.Close();
         }
-
         private void OngletParametres1_Click(object sender, RoutedEventArgs e)
         {
             conteneurPrincipale.Children.Clear();
@@ -666,7 +678,6 @@ namespace Camara_Service
             textUsername.Text = currentUser.Nom;
             if (currentUser.Nom == "Admin") { adminPanel.Visibility = Visibility.Visible; }
         }
-
         private void ExporterFactureBtn_Copy_Click(object sender, RoutedEventArgs e)
         {
             if (!(FacturesDataGrid.SelectedItem is Facture selectedFacture))
@@ -716,7 +727,6 @@ namespace Camara_Service
                 MessageBox.Show($"Erreur lors de l'ouverture ou impression : {ex.Message}");
             }
         }
-
         private string SanitizeFileName(string name)
         {
             foreach (char c in System.IO.Path.GetInvalidFileNameChars())
@@ -821,7 +831,6 @@ namespace Camara_Service
 
             return words.Trim();
         }
-
         public static void ExporterFactureEnPdf(Facture facture, string cheminFichier)
         {
             // Marges normales pour le contenu
@@ -951,7 +960,6 @@ namespace Camara_Service
             doc.Add(tableTexte);
             doc.Close();
         }
-        
         private static PdfPCell CelluleTexteBg(string texte, Font font, BaseColor bg, int align = Element.ALIGN_LEFT)
         {
             return new PdfPCell(new Phrase(texte, font))
@@ -961,7 +969,6 @@ namespace Camara_Service
                 Padding = 5
             };
         }
-
         private void FacturesDataGrid_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (FacturesDataGrid.SelectedItem != null)
@@ -972,7 +979,6 @@ namespace Camara_Service
             conteneurPrincipale.Children.Add(GridFactures);
             updatFacturebtn.Visibility = Visibility.Visible;
         }
-
         private void insererfact(Facture fact) //remplir le panier avec une facture fourni
         {
             modifFacture = fact;
@@ -1053,6 +1059,19 @@ namespace Camara_Service
                 fenetre.ShowDialog();
             }
 
+        }
+        private void BtnGestionUsers_Click(object sender, RoutedEventArgs e)
+        {
+            // On vérifie si l'utilisateur actuel est admin
+            if (MainWindow.currentUser.Info.ToLower() == "admin")
+            {
+                GestionUsersWindow win = new GestionUsersWindow();
+                win.ShowDialog();
+            }
+            else
+            {
+                MessageBox.Show("Accès réservé aux administrateurs ! 🚫");
+            }
         }
     }
    
